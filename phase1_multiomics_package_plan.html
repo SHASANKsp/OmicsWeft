@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 1 — Multi-Omics Package Build Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#132430;--ink-2:#4a5c68;--ink-3:#748590;
+    --paper:#eaeff2;--surface:#fff;--surface-2:#f5f8fa;
+    --line:#d2dde3;--line-soft:#e6edf1;
+    --teal:#0d8f7e;--teal-d:#0a6f61;
+    --low:#0d8f7e;--med:#bd7f16;--high:#c0433a;
+    --g:#2f7f8f;--t:#0d8f7e;--p:#5a7bc9;--m:#c0872b;
+    --radius:14px;--maxw:1100px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;}
+
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--teal);z-index:60;transition:width .1s linear;}
+  nav.spine{position:sticky;top:0;z-index:50;background:rgba(234,239,242,.88);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  nav.spine .wrap{display:flex;align-items:center;gap:20px;height:56px;}
+  nav.spine .brand{font-family:"Archivo";font-weight:800;letter-spacing:-.02em;font-size:15px;}
+  nav.spine .brand span{color:var(--teal);}
+  nav.spine .links{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;}
+  nav.spine a{font-family:"IBM Plex Mono",monospace;font-size:11.5px;text-decoration:none;
+    color:var(--ink-2);padding:6px 10px;border-radius:8px;border:1px solid transparent;transition:.15s;}
+  nav.spine a:hover{color:var(--ink);background:var(--surface);}
+  nav.spine a.active{color:var(--ink);background:var(--surface);border-color:var(--line);}
+
+  header.hero{padding:70px 0 52px;border-bottom:1px solid var(--line);
+    background:radial-gradient(120% 90% at 90% -10%,rgba(13,143,126,.12),transparent 55%);}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--teal-d);margin-bottom:18px;}
+  h1{font-family:"Archivo";font-weight:800;letter-spacing:-.03em;line-height:1.03;
+    font-size:clamp(32px,5.6vw,56px);margin:0 0 20px;}
+  h1 .muted{color:var(--ink-3);}
+  .lede{font-size:clamp(17px,2.1vw,20px);color:var(--ink-2);max-width:62ch;margin:0 0 34px;}
+
+  /* flow signature */
+  .flow{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+  .fstep{flex:1;min-width:150px;border:1px solid var(--line);border-radius:11px;padding:16px;background:var(--surface-2);}
+  .fstep .n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--teal-d);letter-spacing:.08em;}
+  .fstep .t{font-family:"Archivo";font-weight:700;font-size:15px;margin:6px 0 4px;}
+  .fstep .d{font-size:13px;color:var(--ink-2);}
+  .fstep.hl{background:linear-gradient(135deg,var(--ink),#20404f);border-color:var(--ink);}
+  .fstep.hl .n{color:#9fc4bd;}.fstep.hl .t{color:#fff;}.fstep.hl .d{color:#c4d6d2;}
+  .farrow{display:flex;align-items:center;font-family:"IBM Plex Mono",monospace;color:var(--ink-3);font-size:22px;}
+
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;}
+  .fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 16px;}
+  .fact .k{font-family:"Archivo";font-weight:800;font-size:19px;}
+  .fact .v{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3);
+    text-transform:uppercase;letter-spacing:.08em;margin-top:4px;}
+
+  section{padding:56px 0;border-bottom:1px solid var(--line);}
+  h2{font-family:"Archivo";font-weight:800;letter-spacing:-.02em;font-size:clamp(25px,3.8vw,36px);margin:0 0 8px;line-height:1.06;}
+  .sec-ey{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-d);margin-bottom:12px;}
+  .sub{color:var(--ink-2);font-size:17px;max-width:70ch;margin:0 0 10px;}
+  h3{font-family:"Archivo";font-weight:700;font-size:19px;letter-spacing:-.01em;margin:34px 0 8px;}
+  h4{font-family:"Archivo";font-weight:700;font-size:14.5px;margin:20px 0 6px;}
+  p{margin:8px 0 14px;} .note{color:var(--ink-2);font-size:15px;}
+  code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);
+    padding:1px 6px;border-radius:5px;border:1px solid var(--line-soft);color:var(--ink);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+  .card h5{font-family:"Archivo";font-weight:700;font-size:14px;margin:0 0 6px;}
+  ul.clean{margin:8px 0 0;padding:0;list-style:none;}
+  ul.clean li{position:relative;padding:4px 0 4px 20px;font-size:14.5px;color:var(--ink-2);}
+  ul.clean li::before{content:"";position:absolute;left:2px;top:12px;width:7px;height:7px;border-radius:2px;background:var(--teal);}
+  ul.clean li b{color:var(--ink);font-weight:600;}
+
+  .tbl{width:100%;border-collapse:collapse;margin:16px 0 6px;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13.5px;}
+  .tbl th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+    text-align:left;color:var(--ink-3);background:var(--surface-2);padding:11px 13px;border-bottom:1px solid var(--line);}
+  .tbl td{padding:10px 13px;border-bottom:1px solid var(--line-soft);color:var(--ink-2);vertical-align:top;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl td b{color:var(--ink);font-weight:600;}
+  .tbl .hrs{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink);white-space:nowrap;}
+
+  .eff{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;
+    padding:2px 8px;border-radius:20px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;}
+  .eff.low{background:#e3f4ef;color:var(--teal-d);}
+  .eff.med{background:#fbf0da;color:#8a5f0f;}
+  .eff.high{background:#f7e2e0;color:#992f27;}
+  .pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .pill.core{background:#e3f4ef;color:var(--teal-d);}
+  .pill.ext{background:#eef1f4;color:var(--ink-2);border:1px solid var(--line);}
+  .pill.opt{background:#f3eefc;color:#5a45b0;}
+
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:10px;padding:16px 20px;margin:22px 0;}
+  .callout .ct{font-family:"Archivo";font-weight:700;font-size:14px;margin-bottom:4px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:6px 0 4px;align-items:center;}
+  .legend span{display:flex;align-items:center;gap:7px;}
+
+  /* timeline */
+  .sprint{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:start;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:12px 0;}
+  .sprint .wk{font-family:"Archivo";font-weight:800;font-size:12px;color:#fff;background:var(--teal);
+    border-radius:8px;padding:7px 11px;white-space:nowrap;text-align:center;line-height:1.3;}
+  .sprint.rel .wk{background:var(--ink);}
+  .sprint .body .st{font-family:"Archivo";font-weight:700;font-size:16px;margin-bottom:3px;}
+  .sprint .body .sd{font-size:14px;color:var(--ink-2);}
+  .sprint .body .deliv{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--teal-d);margin-top:7px;}
+  .sprint .hrs{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3);white-space:nowrap;text-align:right;}
+  .sprint .hrs b{display:block;font-family:"Archivo";font-size:15px;color:var(--ink);}
+
+  .totbar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 6px;}
+  .totbar .t{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .totbar .t .n{font-family:"Archivo";font-weight:800;font-size:24px;}
+  .totbar .t .l{font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-top:4px;}
+
+  footer{padding:44px 0 70px;color:var(--ink-3);font-size:13px;}
+  footer b{color:var(--ink-2);}
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
+  .reveal.in{opacity:1;transform:none;}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+
+  @media(max-width:860px){
+    .grid2,.grid3,.facts,.totbar{grid-template-columns:1fr;}
+    .facts{grid-template-columns:1fr 1fr;}
+    .sprint{grid-template-columns:1fr;} .sprint .hrs{text-align:left;}
+    nav.spine .links{display:none;}
+    .flow{flex-direction:column;} .farrow{transform:rotate(90deg);justify-content:center;}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="spine"><div class="wrap">
+  <span class="brand">OMICS-KIT · <span>Phase 1</span></span>
+  <span class="links">
+    <a href="#top">Overview</a>
+    <a href="#strategy">Strategy</a>
+    <a href="#agnostic">Disease-agnostic</a>
+    <a href="#arch">Architecture</a>
+    <a href="#effort">Effort model</a>
+    <a href="#preproc">Preprocessing</a>
+    <a href="#methods">Methods</a>
+    <a href="#eval">Evaluation</a>
+    <a href="#data">Datasets</a>
+    <a href="#timeline">Timeline</a>
+  </span>
+</div></nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow">Phase 1 · Build plan · Solo @ 20 hrs / week</div>
+    <h1>Build the package first.<br><span class="muted">Then test everything through it.</span></h1>
+    <p class="lede">An end-to-end multi-omics toolkit where the package <em>is</em> the unit under test — no throwaway scripts. Its core is disease-agnostic by construction: cancer is only the first dataset we happen to have, never an assumption baked into the code. Every method, utility, and evaluator is sized by real effort, and the whole thing is scheduled against 20 focused hours a week.</p>
+
+    <div class="flow reveal">
+      <div class="fstep"><div class="n">STEP 1</div><div class="t">Compile the package skeleton</div><div class="d">Data container, plugin interfaces, config, CI — installable and empty.</div></div>
+      <div class="farrow">→</div>
+      <div class="fstep"><div class="n">STEP 2</div><div class="t">Add methods into the package</div><div class="d">Each integrator / preprocessor / evaluator registered as a plugin.</div></div>
+      <div class="farrow">→</div>
+      <div class="fstep hl"><div class="n">STEP 3</div><div class="t">Test the compiled package</div><div class="d">Pilots &amp; benchmarks call the public API only. Tests validate the product.</div></div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><div class="k">v0.1 → v0.2</div><div class="v">two releases</div></div>
+      <div class="fact"><div class="k">~5 method families</div><div class="v">core first, then extend</div></div>
+      <div class="fact"><div class="k">Task-pluggable</div><div class="v">survival is optional</div></div>
+      <div class="fact"><div class="k">~450 hrs</div><div class="v">~24 weeks @ 20/wk</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- STRATEGY -->
+<section id="strategy">
+  <div class="wrap">
+    <div class="sec-ey">The reversed order</div>
+    <h2>Package-first, not scripts-first</h2>
+    <p class="sub">The earlier draft tested methods as standalone scripts and wrapped the winners afterwards. We flip it: the package scaffold is built at the start, and every method is added <em>into</em> it. Testing then happens on the compiled package, so what's validated is exactly what ships.</p>
+    <div class="grid2">
+      <div class="card reveal"><h5>Why this is better</h5><ul class="clean">
+        <li><b>Tests validate the product.</b> A green test means the package works, not that a loose notebook once worked.</li>
+        <li><b>No rework.</b> Nothing is written twice — no "prototype then re-implement as a wrapper" tax.</li>
+        <li><b>Interfaces are forced early.</b> Defining the plugin contracts up front keeps every later method honest and uniform.</li>
+        <li><b>Reproducibility is free.</b> Because runs go through one API + config, every benchmark number regenerates from a manifest.</li>
+      </ul></div>
+      <div class="card reveal"><h5>What it costs</h5><ul class="clean">
+        <li><b>Slower first light.</b> No results until the skeleton exists (~Sprint 1–2). Accepted trade for zero rework.</li>
+        <li><b>Design discipline required.</b> The plugin interfaces must be right-ish early; budget includes one refactor pass.</li>
+        <li><b>Harder to "just try" a method.</b> Mitigated by a minimal adapter template so adding a method is low-friction.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- DISEASE-AGNOSTIC -->
+<section id="agnostic">
+  <div class="wrap">
+    <div class="sec-ey">Core principle</div>
+    <h2>Disease-agnostic by construction</h2>
+    <p class="sub">Cancer has the most easily available data, so the first pilots run on it — but the package must not assume it. Anything clinical-cancer-specific (Kaplan–Meier, log-rank, C-index) is a <em>task plugin</em>, not part of the core. A T2D or IBD study simply loads a different task with different metrics.</p>
+    <div class="callout reveal"><div class="ct">The rule</div>
+      The core knows about <b>omics blocks, samples, and abstract tasks</b>. It does <b>not</b> know about survival, tumor subtypes, or any disease. Survival analysis (where KM/log-rank live) is registered as one optional <code>Task</code> among several — used only when a dataset actually has time-to-event labels.</div>
+    <div class="grid2">
+      <div class="card reveal"><h5>Core (always present, domain-free)</h5><ul class="clean">
+        <li><b>Data model:</b> N omics blocks over shared samples; partial overlap allowed.</li>
+        <li><b>Generic tasks:</b> <code>clustering</code>, <code>classification</code>, <code>regression</code>.</li>
+        <li><b>Generic metrics:</b> ARI, NMI, silhouette; F1, AUROC, AUPRC; RMSE, R².</li>
+        <li><b>Generic preprocessing:</b> normalization, imputation, batch, feature selection, ID mapping.</li>
+      </ul></div>
+      <div class="card reveal"><h5>Task plugins (loaded on demand)</h5><ul class="clean">
+        <li><b>Survival</b> <span class="pill opt">optional</span> — KM curves, log-rank, C-index (cancer &amp; other time-to-event studies).</li>
+        <li><b>Subtype label sets</b> — dataset-specific ground truths (e.g. PAM50) live with the dataset, not the core.</li>
+        <li><b>Bio-interpretation</b> — pathway/GO enrichment as an opt-in post-step.</li>
+        <li>New domains add a plugin; the core never changes.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="arch">
+  <div class="wrap">
+    <div class="sec-ey">Skeleton first</div>
+    <h2>Package architecture</h2>
+    <p class="sub">A registry-based plugin design: the base classes and registries are Sprint-1 work, everything else slots in behind them. This is the artifact that makes "test the compiled package" possible.</p>
+    <table class="tbl reveal">
+      <thead><tr><th>Module</th><th>Responsibility</th><th>Key abstraction</th></tr></thead>
+      <tbody>
+        <tr><td><code>core/</code></td><td>Data container, registries, config, run manifests, seeding</td><td><code>OmicsData</code> (wraps MuData/AnnData)</td></tr>
+        <tr><td><code>io/</code></td><td>Dataset loaders + sample alignment</td><td><code>Dataset</code> plugin</td></tr>
+        <tr><td><code>preprocess/</code></td><td>Normalize, impute, batch, select, harmonize IDs, QC</td><td><code>Preprocessor</code> plugin</td></tr>
+        <tr><td><code>integrate/</code></td><td>All integration methods behind one interface</td><td><code>Integrator</code> plugin (<code>.fit/.transform</code>)</td></tr>
+        <tr><td><code>tasks/</code></td><td>Task definitions + their metrics (incl. optional survival)</td><td><code>Task</code> + <code>Evaluator</code> plugin</td></tr>
+        <tr><td><code>interpret/</code></td><td>Attribution, enrichment, visualization</td><td><code>Interpreter</code> plugin</td></tr>
+        <tr><td><code>bench/</code></td><td>Runner: any method × dataset × task → tables</td><td><code>Benchmark</code> driver</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Adapters bridge external ecosystems: Python packages (<code>mofapy2</code>, <code>snfpy</code>, <code>multi-view-AE</code>, <code>scvi-tools</code>) wrap directly; R packages (<code>mixOmics</code>, <code>nipalsMCIA</code>, iClusterPlus) go through one shared <code>rpy2</code>/<code>reticulate</code> bridge built once; research code (MOGONET &amp; other GNNs) is vendored and refactored to the <code>Integrator</code> contract.</p>
+  </div>
+</section>
+
+<!-- EFFORT MODEL -->
+<section id="effort">
+  <div class="wrap">
+    <div class="sec-ey">How estimates are set</div>
+    <h2>Effort model</h2>
+    <p class="sub">Effort is driven mostly by <em>whether the method already exists as a maintained package</em>. Wrapping a pip package is hours; reproducing research code is days.</p>
+    <div class="legend reveal">
+      <span><span class="eff low">low</span> maintained pip/Bioc package → thin wrapper · ~5–10 h</span>
+      <span><span class="eff med">med</span> R package or clean research code → adapter / bridge · ~7–14 h</span>
+      <span><span class="eff high">high</span> research code to refactor &amp; reproduce, or build · ~14–18 h</span>
+    </div>
+    <p class="note">Estimates include implementation, an adapter test, a docstring, and one worked example — the real cost of putting something into a tested package, not just importing it. The first R method and the first GNN carry extra one-time infrastructure cost (the bridge, the vendoring pattern) which later methods in the same class then reuse cheaply.</p>
+  </div>
+</section>
+
+<!-- PREPROCESSING -->
+<section id="preproc">
+  <div class="wrap">
+    <div class="sec-ey">Utilities</div>
+    <h2>Preprocessing &amp; harmonization</h2>
+    <p class="sub">Domain-free utilities. Feature-ID harmonization is the single largest and fiddliest item — and doubles as the future KG bridge, so it's worth doing well now.</p>
+    <table class="tbl reveal">
+      <thead><tr><th>Utility</th><th>Backing</th><th>Effort</th><th>Hrs</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><b>Dataset loaders</b> (generic + MLOmics)</td><td>pandas / anndata / mudata</td><td><span class="eff med">med</span></td><td class="hrs">12</td><td>Generic CSV/TSV/H5AD + one benchmark loader; sample alignment</td></tr>
+        <tr><td><b>Normalization</b> (per-omic)</td><td>numpy / scikit-learn / scanpy</td><td><span class="eff low">low</span></td><td class="hrs">8</td><td>log-CPM/TPM/VST, M-values, VSN, scaling</td></tr>
+        <tr><td><b>Missing data</b></td><td>scikit-learn imputers</td><td><span class="eff low">low</span></td><td class="hrs">8</td><td>Filter + KNN/Simple/iterative; native-missing flag</td></tr>
+        <tr><td><b>Batch correction</b></td><td>pycombat / harmonypy</td><td><span class="eff low">low</span></td><td class="hrs">6</td><td>Wrap existing; expose as Preprocessor</td></tr>
+        <tr><td><b>Feature selection / DR</b></td><td>scikit-learn</td><td><span class="eff low">low</span></td><td class="hrs">8</td><td>Variance/MAD, univariate, PCA — leakage-safe (inside CV)</td></tr>
+        <tr><td><b>Feature-ID harmonization</b></td><td>mygene / pybiomart</td><td><span class="eff med">med</span></td><td class="hrs">14</td><td>To Ensembl/HGNC/UniProt; CpG→gene; coverage report. Fiddly; reused as KG bridge later</td></tr>
+        <tr><td><b>QC reports</b></td><td>custom + scanpy</td><td><span class="eff low">low</span></td><td class="hrs">6</td><td>Per-omic distributions, outliers, coverage</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>Preprocessing subtotal ≈ 62 h.</b> Almost all low-effort because the primitives already exist; harmonization is the exception.</p>
+  </div>
+</section>
+
+<!-- METHODS -->
+<section id="methods">
+  <div class="wrap">
+    <div class="sec-ey">The catalogue</div>
+    <h2>Integration methods, by effort</h2>
+    <p class="sub">Tiered so the package works end-to-end fast: a <span class="pill core">core</span> set of one method per family for v0.1, then the <span class="pill ext">extended</span> catalogue for v0.2. A <span class="pill opt">single-cell</span> module is optional and later.</p>
+
+    <h3>Core set — v0.1 (one strong method per family)</h3>
+    <table class="tbl reveal">
+      <thead><tr><th>Method</th><th>Family</th><th>Availability</th><th>Effort</th><th>Hrs</th></tr></thead>
+      <tbody>
+        <tr><td><b>MOFA / MOFA+</b></td><td>Factorization</td><td><code>mofapy2</code> (pip)</td><td><span class="eff low">low</span></td><td class="hrs">6</td></tr>
+        <tr><td><b>SNF</b></td><td>Similarity fusion</td><td><code>snfpy</code> (pip)</td><td><span class="eff low">low</span></td><td class="hrs">5</td></tr>
+        <tr><td><b>Multi-view VAE</b></td><td>Deep · non-graph</td><td><code>multi-view-AE</code> / <code>MultiVae</code> (pip)</td><td><span class="eff low">low</span></td><td class="hrs">10</td></tr>
+        <tr><td><b>DIABLO</b> <span class="pill ext">+ R bridge</span></td><td>Multivariate</td><td><code>mixOmics</code> (R) — first bridge</td><td><span class="eff med">med</span></td><td class="hrs">16</td></tr>
+        <tr><td><b>MOGONET</b> <span class="pill ext">+ GNN pattern</span></td><td>Deep · graph</td><td>research code (pip-from-source, MIT) — first GNN</td><td><span class="eff high">high</span></td><td class="hrs">16</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>Core methods ≈ 53 h.</b> Two carry one-time infrastructure: DIABLO builds the reusable R bridge; MOGONET establishes the vendor-and-refactor pattern for all later GNNs.</p>
+
+    <h3>Extended set — v0.2</h3>
+    <table class="tbl reveal">
+      <thead><tr><th>Method</th><th>Family</th><th>Availability</th><th>Effort</th><th>Hrs</th></tr></thead>
+      <tbody>
+        <tr><td>MCIA</td><td>Multivariate</td><td><code>nipalsMCIA</code> (R/Bioc) — bridge reused</td><td><span class="eff med">med</span></td><td class="hrs">8</td></tr>
+        <tr><td>NEMO</td><td>Similarity · partial data</td><td>R (GitHub)</td><td><span class="eff med">med</span></td><td class="hrs">8</td></tr>
+        <tr><td>moCluster</td><td>Factorization</td><td><code>mogsa</code> (R/Bioc)</td><td><span class="eff med">med</span></td><td class="hrs">7</td></tr>
+        <tr><td>iClusterPlus / iClusterBayes</td><td>Factorization · Bayesian</td><td>R/Bioc (slow)</td><td><span class="eff med">med</span></td><td class="hrs">9</td></tr>
+        <tr><td>RGCCA / SGCCA</td><td>Multivariate</td><td><code>RGCCA</code> (R)</td><td><span class="eff med">med</span></td><td class="hrs">7</td></tr>
+        <tr><td>JIVE</td><td>Factorization</td><td><code>r.jive</code> / py impl</td><td><span class="eff med">med</span></td><td class="hrs">7</td></tr>
+        <tr><td>MoGCN</td><td>Deep · graph</td><td>research code — pattern reused</td><td><span class="eff med">med</span></td><td class="hrs">14</td></tr>
+        <tr><td>DeepMoIC</td><td>Deep · graph</td><td>research code</td><td><span class="eff med">med</span></td><td class="hrs">14</td></tr>
+        <tr><td>SUPREME</td><td>Deep · graph</td><td>research code</td><td><span class="eff med">med</span></td><td class="hrs">14</td></tr>
+        <tr><td>MOGAT</td><td>Deep · graph (attention)</td><td>research code</td><td><span class="eff med">med</span></td><td class="hrs">12</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>Extended methods ≈ 100 h.</b> GNN estimates drop from "high" to "med" once MOGONET has proven the vendor/refactor pattern.</p>
+
+    <h3>Optional — single-cell module <span class="pill opt">later</span></h3>
+    <table class="tbl reveal">
+      <thead><tr><th>Method</th><th>Modalities</th><th>Availability</th><th>Effort</th><th>Hrs</th></tr></thead>
+      <tbody>
+        <tr><td>totalVI / MultiVI / PeakVI</td><td>RNA+protein, RNA+ATAC</td><td><code>scvi-tools</code> (pip, mature)</td><td><span class="eff low">low</span></td><td class="hrs">10</td></tr>
+        <tr><td>MEFISTO (temporal/spatial MOFA)</td><td>bulk / single-cell</td><td><code>mofapy2</code></td><td><span class="eff low">low</span></td><td class="hrs">6</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Deferred because it needs its own container conventions and evaluators; the low wrapping effort makes it a clean later add.</p>
+  </div>
+</section>
+
+<!-- EVALUATION -->
+<section id="eval">
+  <div class="wrap">
+    <div class="sec-ey">Post-processing</div>
+    <h2>Evaluation &amp; interpretation (pluggable)</h2>
+    <p class="sub">Generic evaluators are core; the disease-specific ones (survival) are plugins. This is where the disease-agnostic principle is enforced in code.</p>
+    <table class="tbl reveal">
+      <thead><tr><th>Component</th><th>Scope</th><th>Backing</th><th>Effort</th><th>Hrs</th></tr></thead>
+      <tbody>
+        <tr><td><b>Task + evaluator registry</b></td><td><span class="pill core">core</span></td><td>custom</td><td><span class="eff med">med</span></td><td class="hrs">8</td></tr>
+        <tr><td>Clustering metrics</td><td><span class="pill core">core</span></td><td>scikit-learn</td><td><span class="eff low">low</span></td><td class="hrs">8</td></tr>
+        <tr><td>Classification metrics + nested CV</td><td><span class="pill core">core</span></td><td>scikit-learn</td><td><span class="eff low">low</span></td><td class="hrs">10</td></tr>
+        <tr><td><b>Survival</b> (KM, log-rank, C-index)</td><td><span class="pill opt">plugin</span></td><td>lifelines / scikit-survival</td><td><span class="eff low">low</span></td><td class="hrs">8</td></tr>
+        <tr><td>Regression metrics</td><td><span class="pill core">core</span></td><td>scikit-learn</td><td><span class="eff low">low</span></td><td class="hrs">5</td></tr>
+        <tr><td>Attribution (SHAP, integrated gradients, attention)</td><td><span class="pill core">core</span></td><td>shap / captum</td><td><span class="eff med">med</span></td><td class="hrs">12</td></tr>
+        <tr><td>Pathway / GO enrichment</td><td><span class="pill opt">plugin</span></td><td>gseapy</td><td><span class="eff low">low</span></td><td class="hrs">6</td></tr>
+        <tr><td>Visualization (UMAP, factors, heatmaps, KM)</td><td><span class="pill core">core</span></td><td>umap-learn / matplotlib</td><td><span class="eff low">low</span></td><td class="hrs">10</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>Evaluation subtotal ≈ 67 h</b> (v0.1 uses ~44 h of it; regression/enrichment/full attribution can trail into v0.2).</p>
+  </div>
+</section>
+
+<!-- DATASETS -->
+<section id="data">
+  <div class="wrap">
+    <div class="sec-ey">Test instances, not design drivers</div>
+    <h2>Datasets for the pilots</h2>
+    <p class="sub">Chosen for ease of access. Cancer leads because the data is abundant and richly labelled; one non-cancer set is run early purely to <em>prove</em> the core stays disease-agnostic. Note which task each supports — survival (and therefore KM) only applies where time-to-event labels exist.</p>
+    <table class="tbl reveal">
+      <thead><tr><th>Dataset</th><th>Access</th><th>Omics</th><th>Tasks supported</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><b>MLOmics</b></td><td>open · GitHub</td><td>4 omics, 32 cancers</td><td>clustering, classification, (survival)</td><td>Primary pilot — ML-ready, fastest</td></tr>
+        <tr><td><b>Rappoport–Shamir</b></td><td>open download</td><td>mRNA·methyl·miRNA</td><td>clustering, survival</td><td>Standard clustering benchmark</td></tr>
+        <tr><td>TCGA (cBioPortal)</td><td>open tier</td><td>6 layers</td><td>classification, survival</td><td>Depth (v0.2)</td></tr>
+        <tr><td><b>iHMP / HMP2 (IBD)</b></td><td>open</td><td>metagenome·metatx·metabolome</td><td>classification, regression</td><td><b>Disease-agnostic check</b> — no survival task at all</td></tr>
+        <tr><td>T2D / prediabetes multi-omics</td><td>open · varies</td><td>tx·proteome·metabolome</td><td>classification, regression</td><td>Generalization (v0.2)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout reveal"><div class="ct">The agnostic acceptance test</div>
+      The IBD set has no time-to-event labels. If the package runs it end-to-end — load → preprocess → integrate → classify/regress → interpret — <b>without touching any survival code</b>, the disease-agnostic design is proven. That run is an explicit v0.1 acceptance criterion.</div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <div class="wrap">
+    <div class="sec-ey">20 hrs / week · solo</div>
+    <h2>Timeline</h2>
+    <p class="sub">Two-week sprints of ~40 h. v0.1 delivers a working, tested, disease-agnostic package proven on cancer <em>and</em> one non-cancer set. v0.2 fills out the catalogue and interpretation.</p>
+
+    <div class="totbar reveal">
+      <div class="t"><div class="n">~293 h</div><div class="l">v0.1 · weeks 1–15</div></div>
+      <div class="t"><div class="n">~157 h</div><div class="l">v0.2 · weeks 16–24</div></div>
+      <div class="t"><div class="n">~24 weeks</div><div class="l">≈ 5.5 months to full Phase 1</div></div>
+    </div>
+
+    <h3>v0.1 — working, tested package</h3>
+    <div class="sprint reveal"><div class="wk">WK<br>1–2</div><div class="body"><div class="st">Sprint 1 · Package skeleton</div><div class="sd">Repo, packaging, CI, pre-commit. <code>OmicsData</code> container (MuData/AnnData, sample alignment, partial overlap). Base classes + registries for every plugin type.</div><div class="deliv">▸ pip-installable empty package · CI green · plugin contracts defined</div></div><div class="hrs"><b>40 h</b>cum 40</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>3–4</div><div class="body"><div class="st">Sprint 2 · Config + I/O + first preprocessing</div><div class="sd">Config system, run manifests, seeding, logging, test scaffold. Dataset loaders + normalization, wired as plugins.</div><div class="deliv">▸ load → normalize through the API, under test</div></div><div class="hrs"><b>40 h</b>cum 80</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>5–6</div><div class="body"><div class="st">Sprint 3 · Preprocessing complete</div><div class="sd">Missing-data, feature-ID harmonization + coverage report, batch correction, feature selection, QC. All domain-free.</div><div class="deliv">▸ full preprocessing pipeline, disease-agnostic</div></div><div class="hrs"><b>40 h</b>cum 120</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>7–8</div><div class="body"><div class="st">Sprint 4 · First integrators (packaged)</div><div class="sd">MOFA, SNF, multi-view VAE — all low-effort pip wrappers behind the <code>Integrator</code> contract.</div><div class="deliv">▸ 3 methods callable through the package</div></div><div class="hrs"><b>40 h</b>cum 160</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>9–10</div><div class="body"><div class="st">Sprint 5 · R bridge + first GNN</div><div class="sd">Build the shared <code>rpy2</code>/<code>reticulate</code> bridge and wrap DIABLO. Vendor + refactor MOGONET to the contract.</div><div class="deliv">▸ one multivariate + one deep-graph method; both reusable patterns established</div></div><div class="hrs"><b>40 h</b>cum 200</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>11–12</div><div class="body"><div class="st">Sprint 6 · Disease-agnostic evaluation</div><div class="sd">Task/evaluator registry; clustering + classification metrics; survival as an <em>optional</em> plugin; core visualization.</div><div class="deliv">▸ pluggable evaluation · no disease assumptions in core</div></div><div class="hrs"><b>40 h</b>cum 240</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>13–14</div><div class="body"><div class="st">Sprint 7 · Benchmark harness + pilots</div><div class="sd">Runner (method × dataset × task → tables). Cancer pilot on MLOmics + Rappoport–Shamir. <b>IBD agnostic acceptance run</b> (no survival code touched).</div><div class="deliv">▸ benchmark tables generated <em>by the compiled package</em></div></div><div class="hrs"><b>40 h</b>cum 280</div></div>
+    <div class="sprint rel reveal"><div class="wk">WK<br>15</div><div class="body"><div class="st">Sprint 8 (half) · Docs, tests, release</div><div class="sd">Coverage pass, docs site, three tutorials (quickstart · add-a-method · add-an-evaluator), packaging.</div><div class="deliv">▸ v0.1 open-source release</div></div><div class="hrs"><b>20 h</b>cum 300</div></div>
+
+    <h3>v0.2 — full catalogue + richer interpretation</h3>
+    <div class="sprint reveal"><div class="wk">WK<br>16–19</div><div class="body"><div class="st">Sprints 9–10 · Extended classical methods</div><div class="sd">MCIA, NEMO, moCluster, iClusterPlus/Bayes, RGCCA, JIVE (bridge reused). Add TCGA/cBioPortal + LinkedOmics loaders.</div><div class="deliv">▸ classical catalogue complete</div></div><div class="hrs"><b>80 h</b>cum 380</div></div>
+    <div class="sprint reveal"><div class="wk">WK<br>20–23</div><div class="body"><div class="st">Sprints 11–12 · Extended deep methods + richer eval</div><div class="sd">MoGCN, DeepMoIC, SUPREME, MOGAT (pattern reused). Attribution, enrichment, regression evaluator.</div><div class="deliv">▸ deep-graph catalogue + full interpretation</div></div><div class="hrs"><b>80 h</b>cum 460</div></div>
+    <div class="sprint rel reveal"><div class="wk">WK<br>24</div><div class="body"><div class="st">Sprint 13 (half) · Robustness, docs, release</div><div class="sd">Noise-robustness benchmarks, generalization run on T2D, docs refresh.</div><div class="deliv">▸ v0.2 open-source release</div></div><div class="hrs"><b>20 h</b>cum 480</div></div>
+
+    <div class="callout reveal"><div class="ct">Solo @ 20 h/week — scope discipline</div>
+      The plan front-loads the two one-time infrastructure costs (R bridge in Sprint 5, GNN vendor-pattern in Sprint 5) so later methods stay cheap. The biggest schedule risk is <b>GNN reproduction</b> — research code that doesn't run as published. Mitigation: MOGONET is the Sprint-5 spike; if it fights back, the package still ships v0.1 with four solid families and MOGONET slips to v0.2 without blocking release.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>OMICS-KIT — Phase 1 build plan.</b> Package-first: compile the skeleton, add every method as a plugin, test the compiled package. Disease-agnostic core with survival (and Kaplan–Meier) demoted to an optional task plugin. Effort sized by package availability — pip wrappers are hours, research-code reproduction is days. ~293 h to a tested v0.1 (weeks 1–15), ~157 h more to a full-catalogue v0.2 (weeks 16–24), at 20 hours per week.
+  </div>
+</footer>
+
+<script>
+  var prog=document.getElementById('progress');
+  function onScroll(){var h=document.documentElement;prog.style.width=(h.scrollTop)/(h.scrollHeight-h.clientHeight)*100+'%';}
+  document.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  var links=document.querySelectorAll('nav.spine a'),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){links.forEach(function(a){a.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}
+  });},{rootMargin:'-45% 0px -50% 0px'});
+  document.querySelectorAll('section[id],header[id]').forEach(function(s){io.observe(s);});
+
+  var rm=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!rm){var ro=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:.05});
+    document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el);});}
+  else{document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in');});}
+</script>
+</body>
+</html>
