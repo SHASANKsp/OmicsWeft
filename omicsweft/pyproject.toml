@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omicsweft"
+version = "0.2.0"
+description = "An end-to-end, disease-agnostic multi-omics integration toolkit."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Shasank" }]
+keywords = ["multi-omics", "integration", "bioinformatics", "mudata"]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+    "anndata>=0.10",
+    "mudata>=0.3",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Optional, import-guarded features. None are needed for the core pipeline.
+survival = ["lifelines>=0.27"]
+batch = ["pycombat>=0.0.3"]
+harmony = ["harmonypy>=0.0.9"]
+enrich = ["gseapy>=1.0"]
+ids = ["mygene>=3.2"]
+viz = ["umap-learn>=0.5", "matplotlib>=3.7"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.5"]
+all = ["omicsweft[survival,batch,harmony,enrich,ids,viz,dev]"]
+
+[project.scripts]
+omicsweft = "omicsweft.bench.runner:_cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::FutureWarning", "ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# Deliberate design choices:
+#   BLE001 — broad except is intentional in the benchmark sweep (keep going on
+#            a failing method) and in optional-dependency guards.
+#   S110   — try/except/pass is intentional for optional imports (torch, etc.).
+#   UP046  — Generic[T] is kept for Python 3.10 compatibility (no PEP 695 syntax).
+ignore = ["BLE001", "S110", "UP046"]
